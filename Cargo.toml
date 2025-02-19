@@ -1,0 +1,74 @@
+[package]
+name = "xgraph"
+version = "1.0.0"
+edition = "2021"
+authors = ["<xvi-xv-xii-ix-xxii-ix-xiv <xvi.xv.xii.ix.xxii.ix.xiv@gmail.com>"]
+description = "A comprehensive Rust library providing efficient graph algorithms for solving real-world problems in social network analysis, transportation optimization, recommendation systems, and more"
+license = "MIT"
+repository = "https://github.com/xvi-xv-xii-ix-xxii-ix-xiv/xgraph"
+documentation = "https://docs.rs/xgraph"
+homepage = "https://github.com/xvi-xv-xii-ix-xxii-ix-xiv/xgraph"
+readme = "README.md"
+keywords = ["graph", "algorithm", "network", "dijkstra", "centrality"]
+categories = ["data-structures", "algorithms", "science"]
+exclude = ["/target", "/.git", "/*.iml", "/*.lock"]
+
+[lib]
+name = "xgraph"
+path = "src/lib.rs"
+
+[dependencies]
+rayon = { version = "1.10", optional = true }
+float-cmp = "0.10"
+rand = "0.9"
+slab = "0.4.9"
+
+[dev-dependencies]
+rand = "0.9"  # For benchmarks and tests
+criterion = "0.5.1"  # For benchmarking
+float-cmp = "0.10"
+
+[[bench]]
+name = "xgraph_benchmarks_1"
+harness = false
+path = "benches/benchmark_adjacency_matrix.rs"  # Path to the first benchmark file
+
+[[bench]]
+name = "xgraph_benchmarks_2"
+harness = false
+path = "benches/benchmark_dijkstra.rs"  # Path to the second benchmark file
+
+[[bench]]
+name = "xgraph_benchmarks_3"
+harness = false
+path = "benches/benchmark_graph.rs"  # Path to the third benchmark file
+
+[[bench]]
+name = "xgraph_benchmarks_4"
+harness = false
+path = "benches/benchmark_large_graph.rs"  # Path to the second benchmark file
+
+[[example]]
+name = "basic_usage"
+path = "examples/basic_usage.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+debug = false
+strip = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[package.metadata.release]
+pre-release-commit-message = "chore(release): v{{version}}"
+tag-message = "v{{version}}"
+sign-tag = true
+sign-commit = true
+
+[badges]
+maintenance = { status = "actively-developed" }
+github-actions = { repository = "xvi-xv-xii-ix-xxii-ix-xiv/xgraph", workflow = "CI" }
