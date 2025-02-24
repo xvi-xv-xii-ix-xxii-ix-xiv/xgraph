@@ -1,6 +1,6 @@
 [package]
 name = "xgraph"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 authors = ["<xvi-xv-xii-ix-xxii-ix-xiv <xvi.xv.xii.ix.xxii.ix.xiv@gmail.com>"]
 description = "A comprehensive Rust library providing efficient graph algorithms for solving real-world problems in social network analysis, transportation optimization, recommendation systems, and more"

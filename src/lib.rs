@@ -5,10 +5,7 @@
 
 pub mod algorithms;
 pub mod graph;
+pub mod io;
 pub mod utils;
-
-/// Prelude module for convenient imports
-pub mod prelude {
-    pub use crate::algorithms::*;
-    pub use crate::graph::graph::Graph;
-}
+pub mod conversion;
+pub mod prelude;

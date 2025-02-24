@@ -13,47 +13,48 @@
 ![Rust](https://img.shields.io/badge/Rust-1.70+-orange)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
-# XGraph: Scalable Graph Algorithms for Real-World Applications. 🦀
-A comprehensive Rust library providing efficient graph algorithms for solving real-world problems in social network analysis, transportation optimization, recommendation systems, and more.
+# XGraph is a comprehensive Rust library providing efficient graph algorithms for solving real-world problems in social network analysis, transportation optimization, recommendation systems, and more.
 
+## 🌟 Why XGraph?
 
+- **High Performance**: Optimized algorithms for fast computation.
+- **Flexible Data Model**: Store custom attributes for nodes and edges.
+- **Practical Algorithms**: Covering connectivity, shortest paths, community detection, and more.
+- **Easy Integration**: Simple API with serialization support, including CSV input/output (since v1.1.0).
 
-🌟 Why xgraph?
+## 💼 Applications
 
-- High Performance: Optimized algorithms.
-- Flexible Data Model: Store custom attributes for nodes and edges.
-- Practical Algorithms: Covering connectivity, shortest paths, community detection, and more.
-- Easy Integration: Simple API and serialization support.
-
-💼 Applications:
-- Social Network Analysis: Detect key influencers and communities.
-- Logistics & Routing: Find shortest and most reliable paths.
-- Telecommunication Networks: Identify critical nodes and links.
-- Recommendation Systems: Analyze user-item interaction graphs.
+- **Social Network Analysis**: Detect key influencers and communities.
+- **Logistics & Routing**: Find shortest and most reliable paths.
+- **Telecommunication Networks**: Identify critical nodes and links.
+- **Recommendation Systems**: Analyze user-item interaction graphs.
 
 A comprehensive graph theory library implementing essential algorithms with full type flexibility and performance.
 
 ## Features 🌟
 
-- **Flexible Graph Structure** supporting:
-  - Directed/Undirected graphs
-  - Custom node/edge data types
-  - Weighted edges
-  - Arbitrary attributes
-- **Core Algorithms**:
-  - Bridge detection
-  - Centrality measures (Degree, Betweenness, Closeness)
-  - Connectivity analysis
-  - Leiden community detection
-  - Shortest paths (Dijkstra)
-  - Dominating set finding
-  - Cycle detection
-- **Advanced Operations**:
-  - Adjacency matrix conversion
-  - Graph validation
-  - Batch operations
-  - Attribute management
-  - Graph transposition
+### Flexible Graph Structure
+- Directed/Undirected graphs
+- Custom node/edge data types
+- Weighted edges
+- Arbitrary attributes
+
+### Core Algorithms
+- Bridge detection
+- Centrality measures (Degree, Betweenness, Closeness)
+- Connectivity analysis
+- Leiden community detection
+- Shortest paths (Dijkstra)
+- Dominating set finding
+- Cycle detection
+
+### Advanced Operations
+- Adjacency matrix conversion
+- Graph validation
+- Batch operations
+- Attribute management
+- Graph transposition
+- CSV serialization (since v1.1.0)
 
 ## Quick Start 🚀
 
@@ -211,7 +212,10 @@ use std::collections::HashMap;
 use xgraph::algorithms::connectivity::Connectivity;
 use xgraph::algorithms::leiden_clustering::{CommunityConfig, CommunityDetection};
 use xgraph::algorithms::wiedemann_ford::DominatingSetFinder;
-use xgraph::prelude::{bridges::Bridges, centrality::Centrality, search::Search, *};
+use xgraph::io::{
+  csv_io::CsvIO,
+};
+use xgraph::prelude::*;
 
 type WeightType = u32; // Main type for edge weights
 
@@ -246,6 +250,31 @@ fn print_graph_details(graph: &Graph<WeightType, (), ()>) {
     nodes.iter().map(|(id, _)| id).collect::<Vec<_>>()
   );
   println!("Edges ({}): {:?}", edges.len(), edges);
+}
+
+/// Function to demonstrate IO.
+fn demonstrate_io(graph: &mut Graph<WeightType, (), ()>) {
+  println!("\n================== IO and Format Demonstration ==================");
+
+  let string_graph = graph.to_string_graph();
+
+  // 1. Save to CSV
+  println!("\n[Saving to CSV]");
+  string_graph
+          .save_to_csv("nodes.csv", "edges.csv")
+          .expect("Failed to save to CSV");
+  println!("Graph saved to nodes.csv and edges.csv");
+
+  // 2. Load from CSV
+  println!("\n[Loading from CSV]");
+  let loaded_graph =
+          Graph::<WeightType, String, String>::load_from_csv("nodes.csv", "edges.csv", true)
+                  .expect("Failed to load from CSV");
+  println!(
+    "Loaded graph: {} nodes, {} edges",
+    loaded_graph.nodes.len(),
+    loaded_graph.edges.len()
+  );
 }
 
 /// Function to analyze the graph and print the results.
@@ -484,8 +513,8 @@ fn print_wiedemann_ford(graph: &mut Graph<WeightType, (), ()>) {
 /// # Arguments
 /// * `graph` - A reference to the `Graph<WeightType, (), ()>` object.
 fn perform_clustering(graph: &Graph<WeightType, (), ()>) {
-  let resolutions = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.2, 1.5];
-  let gammas = [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 1.1, 1.2];
+  let resolutions = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0, 1.2, 1.5];
+  let gammas = [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2];
   const LEIDEN_ITERATIONS: usize = 10;
 
   println!("\n================ Leiden Clustering Experiments ================");
@@ -547,7 +576,9 @@ fn main() {
   print_graph_details(&graph);
   analyze_graph(&mut graph);
   perform_clustering(&graph);
+  demonstrate_io(&mut graph);
 }
+
 
 ```
 

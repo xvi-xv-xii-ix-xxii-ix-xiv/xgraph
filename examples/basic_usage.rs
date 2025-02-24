@@ -2,7 +2,10 @@ use std::collections::HashMap;
 use xgraph::algorithms::connectivity::Connectivity;
 use xgraph::algorithms::leiden_clustering::{CommunityConfig, CommunityDetection};
 use xgraph::algorithms::wiedemann_ford::DominatingSetFinder;
-use xgraph::prelude::{bridges::Bridges, centrality::Centrality, search::Search, *};
+use xgraph::io::{
+    csv_io::CsvIO,
+};
+use xgraph::prelude::*;
 
 type WeightType = u32; // Main type for edge weights
 
@@ -37,6 +40,31 @@ fn print_graph_details(graph: &Graph<WeightType, (), ()>) {
         nodes.iter().map(|(id, _)| id).collect::<Vec<_>>()
     );
     println!("Edges ({}): {:?}", edges.len(), edges);
+}
+
+/// Function to demonstrate IO.
+fn demonstrate_io(graph: &mut Graph<WeightType, (), ()>) {
+    println!("\n================== IO and Format Demonstration ==================");
+
+    let string_graph = graph.to_string_graph();
+
+    // 1. Save to CSV
+    println!("\n[Saving to CSV]");
+    string_graph
+        .save_to_csv("nodes.csv", "edges.csv")
+        .expect("Failed to save to CSV");
+    println!("Graph saved to nodes.csv and edges.csv");
+
+    // 2. Load from CSV
+    println!("\n[Loading from CSV]");
+    let loaded_graph =
+        Graph::<WeightType, String, String>::load_from_csv("nodes.csv", "edges.csv", true)
+            .expect("Failed to load from CSV");
+    println!(
+        "Loaded graph: {} nodes, {} edges",
+        loaded_graph.nodes.len(),
+        loaded_graph.edges.len()
+    );
 }
 
 /// Function to analyze the graph and print the results.
@@ -275,8 +303,8 @@ fn print_wiedemann_ford(graph: &mut Graph<WeightType, (), ()>) {
 /// # Arguments
 /// * `graph` - A reference to the `Graph<WeightType, (), ()>` object.
 fn perform_clustering(graph: &Graph<WeightType, (), ()>) {
-    let resolutions = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.2, 1.5];
-    let gammas = [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 1.1, 1.2];
+    let resolutions = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0, 1.2, 1.5];
+    let gammas = [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2];
     const LEIDEN_ITERATIONS: usize = 10;
 
     println!("\n================ Leiden Clustering Experiments ================");
@@ -338,4 +366,5 @@ fn main() {
     print_graph_details(&graph);
     analyze_graph(&mut graph);
     perform_clustering(&graph);
+    demonstrate_io(&mut graph);
 }
