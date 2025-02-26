@@ -42,7 +42,10 @@ pub trait GraphConversion<W, N, E> {
     ///
     /// # Returns
     /// A new `Graph<W, String, String>` with the converted structure and attributes.
+<<<<<<< HEAD
 
+=======
+>>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
     fn to_string_graph(&self) -> Graph<W, String, String>
     where
         W: Copy + PartialEq + Default;
@@ -73,9 +76,13 @@ where
 
         // Convert edges: use default values for new edge data, copy attributes
         for (from, to, weight, _) in self.get_all_edges() {
+<<<<<<< HEAD
             new_graph
                 .add_edge(from, to, weight, E2::default())
                 .unwrap();
+=======
+            new_graph.add_edge(from, to, weight, E2::default()).unwrap();
+>>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
             if let Some(attrs) = self.get_all_edge_attributes(from, to) {
                 for (key, value) in attrs {
                     new_graph.set_edge_attribute(from, to, key.clone(), value.clone());
@@ -115,4 +122,8 @@ where
 
         new_graph
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)

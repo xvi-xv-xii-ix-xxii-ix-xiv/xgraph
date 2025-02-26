@@ -1,6 +1,10 @@
 [package]
 name = "xgraph"
+<<<<<<< HEAD
 version = "1.1.0"
+=======
+version = "1.1.7"
+>>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 edition = "2021"
 authors = ["<xvi-xv-xii-ix-xxii-ix-xiv <xvi.xv.xii.ix.xxii.ix.xiv@gmail.com>"]
 description = "A comprehensive Rust library providing efficient graph algorithms for solving real-world problems in social network analysis, transportation optimization, recommendation systems, and more"
@@ -11,7 +15,11 @@ homepage = "https://github.com/xvi-xv-xii-ix-xxii-ix-xiv/xgraph"
 readme = "README.md"
 keywords = ["graph", "algorithm", "network", "dijkstra", "centrality"]
 categories = ["data-structures", "algorithms", "science"]
+<<<<<<< HEAD
 exclude = ["/target", "/.git", "/*.iml", "/*.lock"]
+=======
+exclude = ["/target", "/.git", "/*.iml", "/*.lock", "/*.csv"]
+>>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 
 [lib]
 name = "xgraph"

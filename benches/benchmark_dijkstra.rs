@@ -1,6 +1,11 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+<<<<<<< HEAD
 use xgraph::graph::graph::Graph;
 use xgraph::prelude::shortest_path::ShortestPath;
+=======
+use xgraph::algorithms::shortest_path::ShortestPath;
+use xgraph::prelude::*;
+>>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 
 fn benchmark_dijkstra(c: &mut Criterion) {
     // Создание графа с 1000 узлами и рёбрами
