@@ -1,12 +1,7 @@
 use crate::graph::graph::Graph;
 use std::fs::File;
-<<<<<<< HEAD
-use std::io::{self, BufRead, BufReader, Write};
-use std::hash::Hash;
-=======
 use std::hash::Hash;
 use std::io::{self, BufRead, BufReader, Write};
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 
 /// A trait for CSV input/output operations on graphs.
 ///
@@ -144,15 +139,7 @@ where
             .cloned()
             .collect();
         edge_attrs.sort(); // Sort for consistent column order
-<<<<<<< HEAD
-        writeln!(
-            edges_writer,
-            "from,to,weight,{}",
-            edge_attrs.join(",")
-        )?;
-=======
         writeln!(edges_writer, "from,to,weight,{}", edge_attrs.join(","))?;
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 
         // Write each edge's details and attributes
         for (_, edge) in self.edges.iter() {
@@ -282,8 +269,4 @@ mod tests {
         assert_eq!(graph.nodes.len(), loaded_graph.nodes.len());
         assert_eq!(graph.edges.len(), loaded_graph.edges.len());
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)

@@ -1,9 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-<<<<<<< HEAD
-use xgraph::graph::graph::Graph;
-=======
 use xgraph::prelude::*;
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 
 fn benchmark_graph_creation(c: &mut Criterion) {
     c.bench_function("create graph with 1000 nodes", |b| {

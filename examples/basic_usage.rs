@@ -2,23 +2,6 @@ use std::collections::HashMap;
 use xgraph::algorithms::connectivity::Connectivity;
 use xgraph::algorithms::leiden_clustering::{CommunityConfig, CommunityDetection};
 use xgraph::algorithms::wiedemann_ford::DominatingSetFinder;
-<<<<<<< HEAD
-use xgraph::io::{
-    csv_io::CsvIO,
-};
-use xgraph::prelude::*;
-
-type WeightType = u32; // Main type for edge weights
-
-/// Function to create a graph from an adjacency matrix.
-///
-/// # Arguments
-/// * `matrix` - A vector of vectors representing the adjacency matrix of the graph.
-/// * `directed` - A boolean indicating whether the graph is directed.
-///
-/// # Returns
-/// A `Graph<WeightType, (), ()>` object created from the given matrix.
-=======
 use xgraph::io::csv_io::CsvIO;
 use xgraph::prelude::*;
 
@@ -39,7 +22,6 @@ type WeightType = u32;
 ///
 /// # Panics
 /// Panics if the matrix is malformed or cannot be converted into a valid graph (e.g., non-square matrix).
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 fn create_graph_from_matrix(
     matrix: Vec<Vec<WeightType>>,
     directed: bool,
@@ -48,15 +30,6 @@ fn create_graph_from_matrix(
         .expect("Failed to create graph from matrix")
 }
 
-<<<<<<< HEAD
-/// Function to print details of the graph nodes and edges.
-///
-/// # Arguments
-/// * `graph` - A reference to the `Graph<WeightType, (), ()>` object.
-fn print_graph_details(graph: &Graph<WeightType, (), ()>) {
-    let nodes: Vec<(usize, &())> = graph.all_nodes().collect(); // Explicitly specify the type of vertices
-    let edges = graph.get_all_edges();
-=======
 /// Prints detailed information about the graph's nodes and edges.
 ///
 /// This function provides a summary of the graph structure, including the number of nodes and edges,
@@ -67,24 +40,11 @@ fn print_graph_details(graph: &Graph<WeightType, (), ()>) {
 fn print_graph_details(graph: &Graph<WeightType, (), ()>) {
     let nodes: Vec<(usize, &())> = graph.all_nodes().collect(); // Collect all nodes into a vector
     let edges = graph.get_all_edges(); // Retrieve all edges
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 
     println!("\n================== Graph Details ==================");
     println!(
         "Nodes ({}): {:?}",
         nodes.len(),
-<<<<<<< HEAD
-        nodes.iter().map(|(id, _)| id).collect::<Vec<_>>()
-    );
-    println!("Edges ({}): {:?}", edges.len(), edges);
-}
-
-/// Function to demonstrate IO.
-fn demonstrate_io(graph: &mut Graph<WeightType, (), ()>) {
-    println!("\n================== IO and Format Demonstration ==================");
-
-    let string_graph = graph.to_string_graph();
-=======
         nodes.iter().map(|(id, _)| id).collect::<Vec<_>>() // List node IDs
     );
     println!("Edges ({}): {:?}", edges.len(), edges); // List edge details
@@ -101,7 +61,6 @@ fn demonstrate_io(graph: &mut Graph<WeightType, (), ()>) {
     println!("\n================== IO and Format Demonstration ==================");
 
     let string_graph = graph.to_string_graph(); // Convert to a string-based graph for IO
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 
     // 1. Save to CSV
     println!("\n[Saving to CSV]");
@@ -122,16 +81,6 @@ fn demonstrate_io(graph: &mut Graph<WeightType, (), ()>) {
     );
 }
 
-<<<<<<< HEAD
-/// Function to analyze the graph and print the results.
-///
-/// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` object.
-fn analyze_graph(graph: &mut Graph<WeightType, (), ()>) {
-    println!("\n================== Graph Analysis ==================");
-
-    // 1. Basic metrics of the graph
-=======
 /// Analyzes the graph and prints various structural properties.
 ///
 /// This function performs a comprehensive analysis, including metrics, connectivity,
@@ -143,7 +92,6 @@ fn analyze_graph(graph: &mut Graph<WeightType, (), ()>) {
     println!("\n================== Graph Analysis ==================");
 
     // 1. Basic metrics
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
     let num_nodes = graph.nodes.len();
     let num_edges = graph.get_all_edges().len();
     print_metrics(num_nodes, num_edges, graph.directed);
@@ -166,20 +114,6 @@ fn analyze_graph(graph: &mut Graph<WeightType, (), ()>) {
     // 8. Graph density
     print_density(num_nodes, num_edges, graph.directed);
 
-<<<<<<< HEAD
-    // 9. Example usage of the Wiedemann-Ford algorithm
-    print_wiedemann_ford(graph);
-}
-
-// Separate functions to improve readability
-
-/// Function to print basic metrics of the graph.
-///
-/// # Arguments
-/// * `nodes` - Number of nodes in the graph.
-/// * `edges` - Number of edges in the graph.
-/// * `directed` - A boolean indicating whether the graph is directed.
-=======
     // 9. Wiedemann-Ford dominating set
     print_wiedemann_ford(graph);
 }
@@ -192,7 +126,6 @@ fn analyze_graph(graph: &mut Graph<WeightType, (), ()>) {
 /// * `nodes` - The number of nodes in the graph.
 /// * `edges` - The number of edges in the graph.
 /// * `directed` - A boolean indicating if the graph is directed.
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 fn print_metrics(nodes: usize, edges: usize, directed: bool) {
     println!("\n[Basic Metrics]");
     println!("Number of nodes: {}", nodes);
@@ -203,28 +136,6 @@ fn print_metrics(nodes: usize, edges: usize, directed: bool) {
     );
 }
 
-<<<<<<< HEAD
-/// Function to print connectivity and path information.
-///
-/// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` object.
-/// * `node_count` - Number of nodes in the graph.
-fn print_connectivity(graph: &mut Graph<WeightType, (), ()>, node_count: usize) {
-    println!("\n[Connectivity and Paths]");
-    if node_count >= 6 {
-        println!("Path from 0 to 5 exists: {}", graph.has_path(0, 5));
-        println!("Shortest path 0->5: {:?}", graph.bfs_path(0, 5));
-    }
-}
-
-/// Function to print centrality information of the graph.
-///
-/// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` object.
-fn print_centrality(graph: &mut Graph<WeightType, (), ()>) {
-    println!("\n[Centrality]");
-    let centrality = graph.degree_centrality();
-=======
 /// Prints connectivity information and example paths in the graph.
 ///
 /// Checks for paths between specific nodes (if enough nodes exist) and displays shortest paths.
@@ -252,21 +163,12 @@ fn print_connectivity(graph: &mut Graph<WeightType, (), ()>, node_count: usize) 
 fn print_centrality(graph: &mut Graph<WeightType, (), ()>) {
     println!("\n[Centrality]");
     let centrality = graph.degree_centrality(); // Calculate degree centrality
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
     println!("Degree centrality:");
     centrality
         .iter()
         .for_each(|(node, val)| println!("  Node {}: {:.2}", node, val));
 }
 
-<<<<<<< HEAD
-/// Function to print attributes of nodes and edges.
-///
-/// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` object.
-fn print_attributes(graph: &mut Graph<WeightType, (), ()>) {
-    // Node attributes (unchanged)
-=======
 /// Prints node and edge attributes present in the graph.
 ///
 /// Aggregates and displays all attributes, grouping them by key and value.
@@ -275,7 +177,6 @@ fn print_attributes(graph: &mut Graph<WeightType, (), ()>) {
 /// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` to analyze.
 fn print_attributes(graph: &mut Graph<WeightType, (), ()>) {
     // Aggregate node attributes
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
     let node_attrs = graph
         .nodes
         .iter()
@@ -301,11 +202,7 @@ fn print_attributes(graph: &mut Graph<WeightType, (), ()>) {
         });
     }
 
-<<<<<<< HEAD
-    // Edge attributes (fixed version)
-=======
     // Aggregate edge attributes
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
     let edge_attrs = graph
         .get_all_edges()
         .iter()
@@ -337,22 +234,6 @@ fn print_attributes(graph: &mut Graph<WeightType, (), ()>) {
     }
 }
 
-<<<<<<< HEAD
-/// Function to print bridges (critical edges) of the graph.
-///
-/// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` object.
-fn print_bridges(graph: &mut Graph<WeightType, (), ()>) {
-    println!("\n[Bridges]");
-    let bridges = graph.find_bridges();
-    println!("Bridges (critical edges): {:?}", bridges);
-}
-
-/// Function to print connected components of the graph.
-///
-/// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` object.
-=======
 /// Prints bridges (critical edges) in the graph.
 ///
 /// Identifies and lists edges whose removal would disconnect the graph.
@@ -372,16 +253,11 @@ fn print_bridges(graph: &mut Graph<WeightType, (), ()>) {
 ///
 /// # Arguments
 /// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` to analyze.
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 fn print_connected_components(graph: &mut Graph<WeightType, (), ()>) {
     println!("\n[Connected Components]");
 
     let components = if graph.is_directed() {
-<<<<<<< HEAD
-        // For directed graphs, show both types of components
-=======
         // Directed graph: show both strong and weak components
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
         println!("Strongly connected components:");
         let scc = graph.find_strongly_connected_components();
         println!("  Count: {}", scc.len());
@@ -391,11 +267,7 @@ fn print_connected_components(graph: &mut Graph<WeightType, (), ()>) {
         println!("  Count: {}", wcc.len());
         wcc
     } else {
-<<<<<<< HEAD
-        // For undirected graphs, regular components
-=======
         // Undirected graph: regular components
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
         graph.find_connected_components()
     };
 
@@ -414,14 +286,6 @@ fn print_connected_components(graph: &mut Graph<WeightType, (), ()>) {
     }
 }
 
-<<<<<<< HEAD
-/// Function to print density of the graph.
-///
-/// # Arguments
-/// * `nodes` - Number of nodes in the graph.
-/// * `edges` - Number of edges in the graph.
-/// * `directed` - Indicates if the graph is directed.
-=======
 /// Prints the density of the graph.
 ///
 /// Calculates and displays the graph's density as the ratio of actual to possible edges.
@@ -430,32 +294,12 @@ fn print_connected_components(graph: &mut Graph<WeightType, (), ()>) {
 /// * `nodes` - The number of nodes in the graph.
 /// * `edges` - The number of edges in the graph.
 /// * `directed` - A boolean indicating if the graph is directed.
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 fn print_density(nodes: usize, edges: usize, directed: bool) {
     println!("\n[Density]");
     let density = calculate_density(nodes, edges, directed);
     println!("Density: {:.4}\n", density);
 }
 
-<<<<<<< HEAD
-/// Function to calculate the density of the graph.
-///
-/// # Arguments
-/// * `nodes` - Number of nodes in the graph.
-/// * `edges` - Number of edges in the graph.
-/// * `directed` - Indicates if the graph is directed.
-///
-/// Returns:
-/// The calculated density as a float.
-fn calculate_density(nodes: usize, edges: usize, directed: bool) -> f64 {
-    if nodes <= 1 {
-        return 0.0;
-    }
-    let possible_edges = if directed {
-        nodes * (nodes - 1)
-    } else {
-        nodes * (nodes - 1) / 2
-=======
 /// Calculates the density of the graph.
 ///
 /// Density is the ratio of existing edges to the maximum possible edges in the graph.
@@ -475,19 +319,10 @@ fn calculate_density(nodes: usize, edges: usize, directed: bool) -> f64 {
         nodes * (nodes - 1) // Directed: n * (n-1) possible edges
     } else {
         nodes * (nodes - 1) / 2 // Undirected: n * (n-1) / 2 possible edges
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
     };
     edges as f64 / possible_edges as f64
 }
 
-<<<<<<< HEAD
-/// Function to print results of the Wiedemann-Ford algorithm on the graph.
-///
-/// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` object.
-fn print_wiedemann_ford(graph: &mut Graph<WeightType, (), ()>) {
-    let dominating_set = graph.find_dominating_set();
-=======
 /// Prints the dominating set found using the Wiedemann-Ford algorithm.
 ///
 /// Identifies a minimal set of nodes that dominate all others in the graph.
@@ -496,21 +331,10 @@ fn print_wiedemann_ford(graph: &mut Graph<WeightType, (), ()>) {
 /// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` to analyze.
 fn print_wiedemann_ford(graph: &mut Graph<WeightType, (), ()>) {
     let dominating_set = graph.find_dominating_set(); // Apply Wiedemann-Ford algorithm
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
     println!("\n[Wiedemann-Ford: Dominating Set]");
     println!("Dominating set: {:?}", dominating_set);
 }
 
-<<<<<<< HEAD
-/// Function to perform Leiden clustering on the graph.
-///
-/// # Arguments
-/// * `graph` - A reference to the `Graph<WeightType, (), ()>` object.
-fn perform_clustering(graph: &Graph<WeightType, (), ()>) {
-    let resolutions = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0, 1.2, 1.5];
-    let gammas = [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2];
-    const LEIDEN_ITERATIONS: usize = 10;
-=======
 /// Performs Leiden clustering on the graph and prints the results.
 ///
 /// Runs clustering experiments with varying resolution and gamma parameters,
@@ -522,23 +346,11 @@ fn perform_clustering(graph: &Graph<WeightType, (), ()>) {
     let resolutions = [0.2]; // Single resolution for simplicity
     let gammas = [0.2]; // Single gamma for simplicity
     const LEIDEN_ITERATIONS: usize = 50; // Maximum iterations for clustering
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
 
     println!("\n================ Leiden Clustering Experiments ================");
 
     for (i, &resolution) in resolutions.iter().enumerate() {
         for (j, &gamma) in gammas.iter().enumerate() {
-<<<<<<< HEAD
-            let config = CommunityConfig {
-                gamma,
-                resolution,
-                iterations: LEIDEN_ITERATIONS,
-            };
-
-            let communities = graph.detect_communities_with_config(config);
-
-            println!("\nExperiment #{}-{}", i + 1, j + 1);
-=======
             let fixed_seed = 42;
 
             // Deterministic clustering configuration
@@ -553,16 +365,10 @@ fn perform_clustering(graph: &Graph<WeightType, (), ()>) {
             let communities_det = graph.detect_communities_with_config(config_det.clone());
 
             println!("\nExperiment #{}-{} (Deterministic)", i + 1, j + 1);
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
             println!(
                 "Parameters: γ = {:.1}, resolution = {:.1}",
                 gamma, resolution
             );
-<<<<<<< HEAD
-            println!("Found {} communities:", communities.len());
-
-            communities
-=======
             println!("Found {} communities:", communities_det.len());
             communities_det
                 .iter()
@@ -598,7 +404,6 @@ fn perform_clustering(graph: &Graph<WeightType, (), ()>) {
             );
             println!("Found {} communities:", communities_non_det.len());
             communities_non_det
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
                 .iter()
                 .enumerate()
                 .for_each(|(idx, (comm_id, nodes))| {
@@ -614,16 +419,12 @@ fn perform_clustering(graph: &Graph<WeightType, (), ()>) {
     }
 }
 
-<<<<<<< HEAD
-fn main() {
-=======
 /// Main entry point for the graph analysis demonstration.
 ///
 /// Creates a sample graph from an adjacency matrix, adds attributes,
 /// and runs various analyses and clustering experiments.
 fn main() {
     // Define a sample adjacency matrix representing an undirected graph
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
     let matrix = vec![
         vec![0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
         vec![1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -637,30 +438,18 @@ fn main() {
         vec![0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
     ];
 
-<<<<<<< HEAD
-    let mut graph = create_graph_from_matrix(matrix, true);
-
-=======
     // Create and initialize the graph
     let mut graph = create_graph_from_matrix(matrix, false);
 
     // Add sample attributes to nodes and edges
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
     let _ = graph.set_node_attribute(1, "color".into(), "red".into());
     let _ = graph.set_node_attribute(2, "color".into(), "blue".into());
     let _ = graph.set_edge_attribute(1, 2, "type".into(), "road".into());
     let _ = graph.set_edge_attribute(2, 3, "type".into(), "rail".into());
 
-<<<<<<< HEAD
-=======
     // Run the analysis and clustering
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
     print_graph_details(&graph);
     analyze_graph(&mut graph);
     perform_clustering(&graph);
     demonstrate_io(&mut graph);
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)

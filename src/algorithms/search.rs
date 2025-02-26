@@ -289,13 +289,9 @@ where
             let mut recursion_stack = HashSet::new();
 
             for (node_id, _) in self.nodes.iter() {
-<<<<<<< HEAD
-                if !visited.contains(&node_id) && self.has_cycle_directed(node_id, &mut visited, &mut recursion_stack) {
-=======
                 if !visited.contains(&node_id)
                     && self.has_cycle_directed(node_id, &mut visited, &mut recursion_stack)
                 {
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
                     return true;
                 }
             }
@@ -303,18 +299,10 @@ where
         } else {
             let mut visited = HashSet::new();
 
-<<<<<<< HEAD
-
-
-
-            for (node_id, _) in self.nodes.iter() {
-                if !visited.contains(&node_id) && self.has_cycle_undirected(node_id, None, &mut visited) {
-=======
             for (node_id, _) in self.nodes.iter() {
                 if !visited.contains(&node_id)
                     && self.has_cycle_undirected(node_id, None, &mut visited)
                 {
->>>>>>> 093494d (refactor(leiden): enhance algorithm structure and documentation)
                     return true;
                 }
             }
