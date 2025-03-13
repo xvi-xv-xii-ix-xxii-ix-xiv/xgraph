@@ -1,131 +1,211 @@
+//! Graph analysis demonstration program
+//!
+//! This module provides a comprehensive demonstration of graph analysis techniques, showcasing
+//! various structural and algorithmic operations on graphs. It includes robust error handling
+//! to ensure reliable execution and serves as an example for users of the `xgraph` library.
+//!
+//! # Features
+//! - Basic graph metrics (node and edge counts, graph type)
+//! - Connectivity analysis (path finding, connected components)
+//! - Centrality measures (degree centrality)
+//! - Bridge detection
+//! - Community detection using the Leiden algorithm
+//! - Input/output operations with CSV files
+//!
+//! # Examples
+//!
+//! Running the full analysis:
+//! ```rust
+//! fn main() -> Result<(), GraphAnalysisError> {
+//!     let matrix = vec![
+//!         vec![0, 1, 1, 0],
+//!         vec![1, 0, 0, 1],
+//!         vec![1, 0, 0, 1],
+//!         vec![0, 1, 1, 0],
+//!     ];
+//!     let mut graph = create_graph_from_matrix(matrix, false)?;
+//!     print_graph_details(&graph);
+//!     analyze_graph(&mut graph)?;
+//!     perform_clustering(&graph)?;
+//!     demonstrate_io(&mut graph)?;
+//!     Ok(())
+//! }
+//! ```
+
 use std::collections::HashMap;
-use xgraph::algorithms::connectivity::Connectivity;
-use xgraph::algorithms::leiden_clustering::{CommunityConfig, CommunityDetection};
-use xgraph::algorithms::wiedemann_ford::DominatingSetFinder;
-use xgraph::io::csv_io::CsvIO;
-use xgraph::prelude::*;
+use xgraph::bridges::Bridges;
+use xgraph::centrality::Centrality;
+use xgraph::graph::algorithms::connectivity::Connectivity;
+use xgraph::graph::algorithms::leiden_clustering::{CommunityConfig, CommunityDetection};
+use xgraph::graph::algorithms::wiedemann_ford::DominatingSetFinder;
+use xgraph::graph::conversion::GraphConversion;
+use xgraph::graph::CsvIO;
+use xgraph::search::Search;
+use xgraph::Graph;
 
 /// Type alias for edge weights used throughout the graph analysis.
+///
+/// Defines the weight type as `u32` for consistency across the demonstration.
 type WeightType = u32;
+
+/// Error type for graph analysis operations.
+///
+/// Encapsulates various errors that may occur during graph analysis, providing detailed feedback
+/// to the library user.
+#[derive(Debug)]
+pub enum GraphAnalysisError {
+    /// Indicates a failure in bridge detection.
+    BridgeError(xgraph::bridges::BridgeError),
+    /// Indicates a failure in centrality computation.
+    CentralityError(xgraph::centrality::CentralityError),
+    /// Indicates a failure in connectivity analysis.
+    ConnectivityError(xgraph::connectivity::ConnectivityError),
+    /// Indicates a failure in IO operations.
+    IOError(std::io::Error),
+    /// Indicates a failure in community detection.
+    CommunityDetectionError(xgraph::graph::algorithms::leiden_clustering::CommunityDetectionError),
+    /// Indicates a failure in search operations (e.g., path finding).
+    SearchError(xgraph::search::SearchError),
+    /// Indicates a failure in graph conversion (e.g., during IO operations).
+    ConversionError(xgraph::graph::conversion::graph_conversion::GraphConversionError),
+    /// Indicates a failure in dominating set computation.
+    DominatingSetError(xgraph::graph::algorithms::wiedemann_ford::DominatingSetError),
+}
+
+impl std::fmt::Display for GraphAnalysisError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GraphAnalysisError::BridgeError(e) => write!(f, "Bridge computation error: {}", e),
+            GraphAnalysisError::CentralityError(e) => {
+                write!(f, "Centrality computation error: {}", e)
+            }
+            GraphAnalysisError::ConnectivityError(e) => {
+                write!(f, "Connectivity analysis error: {}", e)
+            }
+            GraphAnalysisError::IOError(e) => write!(f, "IO error: {}", e),
+            GraphAnalysisError::CommunityDetectionError(e) => {
+                write!(f, "Community detection error: {}", e)
+            }
+            GraphAnalysisError::SearchError(e) => write!(f, "Search error: {}", e),
+            GraphAnalysisError::ConversionError(e) => write!(f, "Graph conversion error: {}", e),
+            GraphAnalysisError::DominatingSetError(e) => {
+                write!(f, "Dominating set computation error: {}", e)
+            }
+        }
+    }
+}
+
+impl std::error::Error for GraphAnalysisError {}
 
 /// Creates a graph from an adjacency matrix representation.
 ///
-/// This function constructs a graph where edges are defined by non-zero values in the matrix.
-/// The resulting graph uses `WeightType` for edge weights and empty tuples for node and edge data.
+/// Constructs a graph where non-zero values in the matrix represent edges with weights.
+/// Uses `WeightType` for edge weights and empty tuples for node and edge data.
 ///
 /// # Arguments
-/// * `matrix` - A 2D vector where `matrix[i][j]` represents the weight of an edge from node `i` to node `j`. A value of 0 indicates no edge.
-/// * `directed` - A boolean indicating whether the graph is directed (true) or undirected (false).
+/// - `matrix`: A 2D vector where `matrix[i][j]` is the weight of an edge from node `i` to node `j`. A value of 0 indicates no edge.
+/// - `directed`: A boolean indicating whether the graph is directed (`true`) or undirected (`false`).
 ///
 /// # Returns
-/// A `Graph<WeightType, (), ()>` instance initialized from the matrix.
-///
-/// # Panics
-/// Panics if the matrix is malformed or cannot be converted into a valid graph (e.g., non-square matrix).
+/// - `Ok(Graph<WeightType, (), ()>)`: The constructed graph on success.
+/// - `Err(GraphAnalysisError)`: If the matrix is invalid (e.g., non-square or malformed).
 fn create_graph_from_matrix(
     matrix: Vec<Vec<WeightType>>,
     directed: bool,
-) -> Graph<WeightType, (), ()> {
-    Graph::from_adjacency_matrix(&matrix, directed, (), ())
-        .expect("Failed to create graph from matrix")
+) -> Result<Graph<WeightType, (), ()>, GraphAnalysisError> {
+    Graph::from_adjacency_matrix(&matrix, directed, (), ()).map_err(|e| {
+        GraphAnalysisError::IOError(std::io::Error::new(std::io::ErrorKind::InvalidData, e))
+    })
 }
 
 /// Prints detailed information about the graph's nodes and edges.
 ///
-/// This function provides a summary of the graph structure, including the number of nodes and edges,
-/// and lists their respective IDs and connections.
+/// Displays a summary of the graph structure, including node and edge counts and their details.
 ///
 /// # Arguments
-/// * `graph` - A reference to the `Graph<WeightType, (), ()>` to analyze.
+/// - `graph`: A reference to the graph to analyze.
 fn print_graph_details(graph: &Graph<WeightType, (), ()>) {
-    let nodes: Vec<(usize, &())> = graph.all_nodes().collect(); // Collect all nodes into a vector
-    let edges = graph.get_all_edges(); // Retrieve all edges
+    let nodes: Vec<(usize, &())> = graph.all_nodes().collect();
+    let edges = graph.get_all_edges();
 
     println!("\n================== Graph Details ==================");
     println!(
         "Nodes ({}): {:?}",
         nodes.len(),
-        nodes.iter().map(|(id, _)| id).collect::<Vec<_>>() // List node IDs
+        nodes.iter().map(|(id, _)| id).collect::<Vec<_>>()
     );
-    println!("Edges ({}): {:?}", edges.len(), edges); // List edge details
+    println!("Edges ({}): {:?}", edges.len(), edges);
 }
 
 /// Demonstrates input/output operations with the graph.
 ///
-/// Saves the graph to CSV files and then loads it back to verify the IO process.
-/// Prints the steps and results for clarity.
+/// Saves the graph to CSV files and loads it back, displaying the results.
 ///
 /// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` to save and load.
-fn demonstrate_io(graph: &mut Graph<WeightType, (), ()>) {
+/// - `graph`: A mutable reference to the graph to process.
+///
+/// # Returns
+/// - `Ok(())`: On successful completion of IO operations.
+/// - `Err(GraphAnalysisError)`: If conversion, saving, or loading the graph fails.
+fn demonstrate_io(graph: &mut Graph<WeightType, (), ()>) -> Result<(), GraphAnalysisError> {
     println!("\n================== IO and Format Demonstration ==================");
+    let string_graph = graph
+        .to_string_graph()
+        .map_err(GraphAnalysisError::ConversionError)?;
 
-    let string_graph = graph.to_string_graph(); // Convert to a string-based graph for IO
-
-    // 1. Save to CSV
     println!("\n[Saving to CSV]");
     string_graph
         .save_to_csv("nodes.csv", "edges.csv")
-        .expect("Failed to save to CSV");
+        .map_err(GraphAnalysisError::IOError)?;
     println!("Graph saved to nodes.csv and edges.csv");
 
-    // 2. Load from CSV
     println!("\n[Loading from CSV]");
     let loaded_graph =
         Graph::<WeightType, String, String>::load_from_csv("nodes.csv", "edges.csv", true)
-            .expect("Failed to load from CSV");
+            .map_err(GraphAnalysisError::IOError)?;
     println!(
         "Loaded graph: {} nodes, {} edges",
         loaded_graph.nodes.len(),
         loaded_graph.edges.len()
     );
+    Ok(())
 }
 
 /// Analyzes the graph and prints various structural properties.
 ///
-/// This function performs a comprehensive analysis, including metrics, connectivity,
-/// centrality, attributes, bridges, components, density, and dominating sets.
+/// Performs a comprehensive analysis including metrics, connectivity, centrality, attributes,
+/// bridges, components, density, and dominating sets.
 ///
 /// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` to analyze.
-fn analyze_graph(graph: &mut Graph<WeightType, (), ()>) {
+/// - `graph`: A mutable reference to the graph to analyze.
+///
+/// # Returns
+/// - `Ok(())`: On successful analysis.
+/// - `Err(GraphAnalysisError)`: If any analysis step fails.
+fn analyze_graph(graph: &mut Graph<WeightType, (), ()>) -> Result<(), GraphAnalysisError> {
     println!("\n================== Graph Analysis ==================");
 
-    // 1. Basic metrics
     let num_nodes = graph.nodes.len();
     let num_edges = graph.get_all_edges().len();
     print_metrics(num_nodes, num_edges, graph.directed);
-
-    // 2. Connectivity and paths
-    print_connectivity(graph, num_nodes);
-
-    // 3. Centrality
-    print_centrality(graph);
-
-    // 4-5. Node and edge attributes
+    print_connectivity(graph, num_nodes)?;
+    print_centrality(graph)?;
     print_attributes(graph);
-
-    // 6. Bridges
-    print_bridges(graph);
-
-    // 7. Connected components
-    print_connected_components(graph);
-
-    // 8. Graph density
+    print_bridges(graph)?;
+    print_connected_components(graph)?;
     print_density(num_nodes, num_edges, graph.directed);
-
-    // 9. Wiedemann-Ford dominating set
-    print_wiedemann_ford(graph);
+    print_wiedemann_ford(graph)?;
+    Ok(())
 }
 
 /// Prints basic metrics about the graph structure.
 ///
-/// Displays the number of nodes, edges, and graph type (directed or undirected).
+/// Displays the number of nodes, edges, and whether the graph is directed.
 ///
 /// # Arguments
-/// * `nodes` - The number of nodes in the graph.
-/// * `edges` - The number of edges in the graph.
-/// * `directed` - A boolean indicating if the graph is directed.
+/// - `nodes`: The number of nodes in the graph.
+/// - `edges`: The number of edges in the graph.
+/// - `directed`: Whether the graph is directed (`true`) or undirected (`false`).
 fn print_metrics(nodes: usize, edges: usize, directed: bool) {
     println!("\n[Basic Metrics]");
     println!("Number of nodes: {}", nodes);
@@ -136,47 +216,66 @@ fn print_metrics(nodes: usize, edges: usize, directed: bool) {
     );
 }
 
-/// Prints connectivity information and example paths in the graph.
+/// Prints connectivity information and example paths.
 ///
-/// Checks for paths between specific nodes (if enough nodes exist) and displays shortest paths.
+/// Demonstrates path existence and shortest path finding if sufficient nodes exist.
 ///
 /// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` to analyze.
-/// * `node_count` - The total number of nodes in the graph.
-fn print_connectivity(graph: &mut Graph<WeightType, (), ()>, node_count: usize) {
+/// - `graph`: A mutable reference to the graph.
+/// - `node_count`: The total number of nodes in the graph.
+///
+/// # Returns
+/// - `Ok(())`: On successful connectivity analysis.
+/// - `Err(GraphAnalysisError)`: If connectivity checks fail (e.g., invalid nodes).
+fn print_connectivity(
+    graph: &mut Graph<WeightType, (), ()>,
+    node_count: usize,
+) -> Result<(), GraphAnalysisError> {
     println!("\n[Connectivity and Paths]");
     if node_count >= 6 {
-        // Example path check between nodes 0 and 5
-        println!("Path from 0 to 5 exists: {}", graph.has_path(0, 5));
-        println!("Shortest path 0->5: {:?}", graph.bfs_path(0, 5));
+        let has_path = graph
+            .has_path(0, 5)
+            .map_err(GraphAnalysisError::SearchError)?;
+        println!("Path from 0 to 5 exists: {}", has_path);
+        let bfs_path = graph
+            .bfs_path(0, 5)
+            .map_err(GraphAnalysisError::SearchError)?;
+        println!("Shortest path 0->5: {:?}", bfs_path);
     } else {
         println!("Not enough nodes for path example (need at least 6)");
     }
+    Ok(())
 }
 
 /// Prints centrality metrics for the graph's nodes.
 ///
-/// Computes and displays the degree centrality for each node.
+/// Computes and displays degree centrality for each node.
 ///
 /// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` to analyze.
-fn print_centrality(graph: &mut Graph<WeightType, (), ()>) {
+/// - `graph`: A mutable reference to the graph.
+///
+/// # Returns
+/// - `Ok(())`: On successful centrality computation.
+/// - `Err(GraphAnalysisError)`: If centrality computation fails.
+fn print_centrality(graph: &mut Graph<WeightType, (), ()>) -> Result<(), GraphAnalysisError> {
     println!("\n[Centrality]");
-    let centrality = graph.degree_centrality(); // Calculate degree centrality
+    let centrality = graph
+        .degree_centrality()
+        .map_err(GraphAnalysisError::CentralityError)?;
     println!("Degree centrality:");
     centrality
         .iter()
-        .for_each(|(node, val)| println!("  Node {}: {:.2}", node, val));
+        .for_each(|(node, val)| println!("  Node {}: {}", node, val));
+    Ok(())
 }
 
 /// Prints node and edge attributes present in the graph.
 ///
-/// Aggregates and displays all attributes, grouping them by key and value.
+/// Aggregates and displays all attributes by key and value.
 ///
 /// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` to analyze.
+/// - `graph`: A mutable reference to the graph.
 fn print_attributes(graph: &mut Graph<WeightType, (), ()>) {
-    // Aggregate node attributes
     let node_attrs = graph
         .nodes
         .iter()
@@ -202,7 +301,6 @@ fn print_attributes(graph: &mut Graph<WeightType, (), ()>) {
         });
     }
 
-    // Aggregate edge attributes
     let edge_attrs = graph
         .get_all_edges()
         .iter()
@@ -234,41 +332,61 @@ fn print_attributes(graph: &mut Graph<WeightType, (), ()>) {
     }
 }
 
-/// Prints bridges (critical edges) in the graph.
+/// Prints bridges in the graph.
 ///
-/// Identifies and lists edges whose removal would disconnect the graph.
+/// Identifies and displays edges whose removal would disconnect the graph.
 ///
 /// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` to analyze.
-fn print_bridges(graph: &mut Graph<WeightType, (), ()>) {
+/// - `graph`: A mutable reference to the graph.
+///
+/// # Returns
+/// - `Ok(())`: On successful bridge detection.
+/// - `Err(GraphAnalysisError)`: If bridge detection fails.
+fn print_bridges(graph: &mut Graph<WeightType, (), ()>) -> Result<(), GraphAnalysisError> {
     println!("\n[Bridges]");
-    let bridges = graph.find_bridges(); // Find all bridges
+    let bridges = graph
+        .find_bridges()
+        .map_err(GraphAnalysisError::BridgeError)?;
     println!("Bridges (critical edges): {:?}", bridges);
+    Ok(())
 }
 
-/// Prints information about connected components in the graph.
+/// Prints information about connected components.
 ///
-/// For directed graphs, shows both strongly and weakly connected components.
-/// For undirected graphs, shows regular connected components.
+/// Displays strongly/weakly connected components for directed graphs or regular components
+/// for undirected graphs.
 ///
 /// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` to analyze.
-fn print_connected_components(graph: &mut Graph<WeightType, (), ()>) {
+/// - `graph`: A mutable reference to the graph.
+///
+/// # Returns
+/// - `Ok(())`: On successful component analysis.
+/// - `Err(GraphAnalysisError)`: If component analysis fails.
+fn print_connected_components(
+    graph: &mut Graph<WeightType, (), ()>,
+) -> Result<(), GraphAnalysisError> {
     println!("\n[Connected Components]");
 
-    let components = if graph.is_directed() {
-        // Directed graph: show both strong and weak components
+    let components = if graph
+        .is_directed()
+        .map_err(GraphAnalysisError::ConnectivityError)?
+    {
         println!("Strongly connected components:");
-        let scc = graph.find_strongly_connected_components();
+        let scc = graph
+            .find_strongly_connected_components()
+            .map_err(GraphAnalysisError::ConnectivityError)?;
         println!("  Count: {}", scc.len());
 
         println!("Weakly connected components:");
-        let wcc = graph.find_weakly_connected_components();
+        let wcc = graph
+            .find_weakly_connected_components()
+            .map_err(GraphAnalysisError::ConnectivityError)?;
         println!("  Count: {}", wcc.len());
         wcc
     } else {
-        // Undirected graph: regular components
-        graph.find_connected_components()
+        graph
+            .find_connected_components()
+            .map_err(GraphAnalysisError::ConnectivityError)?
     };
 
     components
@@ -276,24 +394,37 @@ fn print_connected_components(graph: &mut Graph<WeightType, (), ()>) {
         .enumerate()
         .for_each(|(i, c)| println!("  Component {}: {} nodes", i, c.len()));
 
-    println!("Overall connectivity: {}", graph.is_connected());
+    let is_connected = graph
+        .is_connected()
+        .map_err(GraphAnalysisError::ConnectivityError)?;
+    println!("Overall connectivity: {}", is_connected);
 
-    // Additional connectivity checks
     println!("\nAdditional checks:");
-    println!("Weakly connected: {}", graph.is_weakly_connected());
-    if graph.is_directed() {
-        println!("Strongly connected: {}", graph.is_strongly_connected());
+    let is_weakly = graph
+        .is_weakly_connected()
+        .map_err(GraphAnalysisError::ConnectivityError)?;
+    println!("Weakly connected: {}", is_weakly);
+
+    if graph
+        .is_directed()
+        .map_err(GraphAnalysisError::ConnectivityError)?
+    {
+        let is_strongly = graph
+            .is_strongly_connected()
+            .map_err(GraphAnalysisError::ConnectivityError)?;
+        println!("Strongly connected: {}", is_strongly);
     }
+    Ok(())
 }
 
 /// Prints the density of the graph.
 ///
-/// Calculates and displays the graph's density as the ratio of actual to possible edges.
+/// Displays the ratio of actual edges to the maximum possible edges.
 ///
 /// # Arguments
-/// * `nodes` - The number of nodes in the graph.
-/// * `edges` - The number of edges in the graph.
-/// * `directed` - A boolean indicating if the graph is directed.
+/// - `nodes`: The number of nodes in the graph.
+/// - `edges`: The number of edges in the graph.
+/// - `directed`: Whether the graph is directed (`true`) or undirected (`false`).
 fn print_density(nodes: usize, edges: usize, directed: bool) {
     println!("\n[Density]");
     let density = calculate_density(nodes, edges, directed);
@@ -302,50 +433,60 @@ fn print_density(nodes: usize, edges: usize, directed: bool) {
 
 /// Calculates the density of the graph.
 ///
-/// Density is the ratio of existing edges to the maximum possible edges in the graph.
+/// Computes the ratio of existing edges to the maximum possible edges.
 ///
 /// # Arguments
-/// * `nodes` - The number of nodes in the graph.
-/// * `edges` - The number of edges in the graph.
-/// * `directed` - A boolean indicating if the graph is directed.
+/// - `nodes`: The number of nodes in the graph.
+/// - `edges`: The number of edges in the graph.
+/// - `directed`: Whether the graph is directed (`true`) or undirected (`false`).
 ///
 /// # Returns
-/// The density as a floating-point value between 0.0 and 1.0.
+/// - `f64`: The density value, ranging from 0.0 (no edges) to 1.0 (fully connected).
 fn calculate_density(nodes: usize, edges: usize, directed: bool) -> f64 {
     if nodes <= 1 {
-        return 0.0; // No edges possible with 0 or 1 node
+        return 0.0;
     }
     let possible_edges = if directed {
-        nodes * (nodes - 1) // Directed: n * (n-1) possible edges
+        nodes * (nodes - 1)
     } else {
-        nodes * (nodes - 1) / 2 // Undirected: n * (n-1) / 2 possible edges
+        nodes * (nodes - 1) / 2
     };
     edges as f64 / possible_edges as f64
 }
 
-/// Prints the dominating set found using the Wiedemann-Ford algorithm.
+/// Prints the dominating set using the Wiedemann-Ford algorithm.
 ///
-/// Identifies a minimal set of nodes that dominate all others in the graph.
+/// Identifies and displays nodes that dominate all others in the graph.
 ///
 /// # Arguments
-/// * `graph` - A mutable reference to the `Graph<WeightType, (), ()>` to analyze.
-fn print_wiedemann_ford(graph: &mut Graph<WeightType, (), ()>) {
-    let dominating_set = graph.find_dominating_set(); // Apply Wiedemann-Ford algorithm
+/// - `graph`: A mutable reference to the graph.
+///
+/// # Returns
+/// - `Ok(())`: On successful computation and display of the dominating set.
+/// - `Err(GraphAnalysisError)`: If dominating set computation fails.
+fn print_wiedemann_ford(graph: &mut Graph<WeightType, (), ()>) -> Result<(), GraphAnalysisError> {
+    let dominating_set = graph
+        .find_dominating_set()
+        .map_err(GraphAnalysisError::DominatingSetError)?;
     println!("\n[Wiedemann-Ford: Dominating Set]");
     println!("Dominating set: {:?}", dominating_set);
+    Ok(())
 }
 
-/// Performs Leiden clustering on the graph and prints the results.
+/// Performs Leiden clustering and prints results.
 ///
-/// Runs clustering experiments with varying resolution and gamma parameters,
-/// comparing deterministic and non-deterministic outcomes.
+/// Runs the Leiden clustering algorithm with varying parameters and displays the results.
 ///
 /// # Arguments
-/// * `graph` - A reference to the `Graph<WeightType, (), ()>` to cluster.
-fn perform_clustering(graph: &Graph<WeightType, (), ()>) {
-    let resolutions = [0.2]; // Single resolution for simplicity
-    let gammas = [0.2]; // Single gamma for simplicity
-    const LEIDEN_ITERATIONS: usize = 50; // Maximum iterations for clustering
+/// - `graph`: A reference to the graph to cluster.
+///
+/// # Returns
+/// - `Ok(())`: On successful clustering.
+/// - `Err(GraphAnalysisError)`: If clustering fails (e.g., due to invalid parameters).
+fn perform_clustering(graph: &Graph<WeightType, (), ()>) -> Result<(), GraphAnalysisError> {
+    let resolutions = [0.2];
+    let gammas = [0.2];
+    const LEIDEN_ITERATIONS: usize = 50;
 
     println!("\n================ Leiden Clustering Experiments ================");
 
@@ -353,7 +494,6 @@ fn perform_clustering(graph: &Graph<WeightType, (), ()>) {
         for (j, &gamma) in gammas.iter().enumerate() {
             let fixed_seed = 42;
 
-            // Deterministic clustering configuration
             let config_det = CommunityConfig {
                 gamma,
                 resolution,
@@ -362,8 +502,9 @@ fn perform_clustering(graph: &Graph<WeightType, (), ()>) {
                 seed: None,
             };
 
-            let communities_det = graph.detect_communities_with_config(config_det.clone());
-
+            let communities_det = graph
+                .detect_communities_with_config(config_det.clone())
+                .map_err(GraphAnalysisError::CommunityDetectionError)?;
             println!("\nExperiment #{}-{} (Deterministic)", i + 1, j + 1);
             println!(
                 "Parameters: γ = {:.1}, resolution = {:.1}",
@@ -383,15 +524,15 @@ fn perform_clustering(graph: &Graph<WeightType, (), ()>) {
                     );
                 });
 
-            // Non-deterministic clustering configuration
             let config_non_det = CommunityConfig {
                 deterministic: false,
                 seed: None,
                 ..config_det
             };
 
-            let communities_non_det = graph.detect_communities_with_config(config_non_det);
-
+            let communities_non_det = graph
+                .detect_communities_with_config(config_non_det)
+                .map_err(GraphAnalysisError::CommunityDetectionError)?;
             println!(
                 "\nExperiment #{}-{} (Non-Deterministic with seed {})",
                 i + 1,
@@ -417,14 +558,17 @@ fn perform_clustering(graph: &Graph<WeightType, (), ()>) {
                 });
         }
     }
+    Ok(())
 }
 
 /// Main entry point for the graph analysis demonstration.
 ///
-/// Creates a sample graph from an adjacency matrix, adds attributes,
-/// and runs various analyses and clustering experiments.
-fn main() {
-    // Define a sample adjacency matrix representing an undirected graph
+/// Creates a sample graph, adds attributes, and runs a full suite of analyses.
+///
+/// # Returns
+/// - `Ok(())`: On successful execution of all operations.
+/// - `Err(GraphAnalysisError)`: If any operation fails.
+fn main() -> Result<(), GraphAnalysisError> {
     let matrix = vec![
         vec![0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
         vec![1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -438,18 +582,16 @@ fn main() {
         vec![0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
     ];
 
-    // Create and initialize the graph
-    let mut graph = create_graph_from_matrix(matrix, false);
+    let mut graph = create_graph_from_matrix(matrix, false)?;
 
-    // Add sample attributes to nodes and edges
     let _ = graph.set_node_attribute(1, "color".into(), "red".into());
     let _ = graph.set_node_attribute(2, "color".into(), "blue".into());
     let _ = graph.set_edge_attribute(1, 2, "type".into(), "road".into());
     let _ = graph.set_edge_attribute(2, 3, "type".into(), "rail".into());
 
-    // Run the analysis and clustering
     print_graph_details(&graph);
-    analyze_graph(&mut graph);
-    perform_clustering(&graph);
-    demonstrate_io(&mut graph);
+    analyze_graph(&mut graph)?;
+    perform_clustering(&graph)?;
+    demonstrate_io(&mut graph)?;
+    Ok(())
 }

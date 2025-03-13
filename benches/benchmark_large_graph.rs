@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use xgraph::algorithms::shortest_path::ShortestPath;
-use xgraph::prelude::*;
+use xgraph::hgraph::algorithms::shortest_path::ShortestPath;
+use xgraph::hgraph::prelude::*;
 
 fn benchmark_large_graph(c: &mut Criterion) {
     // Создание большого графа

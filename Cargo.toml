@@ -1,6 +1,6 @@
 [package]
 name = "xgraph"
-version = "1.1.7"
+version = "2.0.0"
 edition = "2021"
 authors = ["<xvi-xv-xii-ix-xxii-ix-xiv <xvi.xv.xii.ix.xxii.ix.xiv@gmail.com>"]
 description = "A comprehensive Rust library providing efficient graph algorithms for solving real-world problems in social network analysis, transportation optimization, recommendation systems, and more"
@@ -9,7 +9,7 @@ repository = "https://github.com/xvi-xv-xii-ix-xxii-ix-xiv/xgraph"
 documentation = "https://docs.rs/xgraph"
 homepage = "https://github.com/xvi-xv-xii-ix-xxii-ix-xiv/xgraph"
 readme = "README.md"
-keywords = ["graph", "algorithm", "network", "dijkstra", "centrality"]
+keywords = ["heterogeneous", "multigraph", "graph", "dijkstra", "network"]
 categories = ["data-structures", "algorithms", "science"]
 exclude = ["/target", "/.git", "/*.iml", "/*.lock", "/*.csv"]
 
@@ -28,29 +28,38 @@ rand = "0.9"  # For benchmarks and tests
 criterion = "0.5.1"  # For benchmarking
 float-cmp = "0.10"
 
+[features]
+default = ["graph", "hgraph"]  # Включаем обе фичи по умолчанию
+graph = []                     # Фича для работы с обычным графом
+hgraph = []                    # Фича для работы с гетерогенным мультиграфом
+
 [[bench]]
 name = "xgraph_benchmarks_1"
 harness = false
-path = "benches/benchmark_adjacency_matrix.rs"  # Path to the first benchmark file
+path = "benches/benchmark_adjacency_matrix.rs"
 
 [[bench]]
 name = "xgraph_benchmarks_2"
 harness = false
-path = "benches/benchmark_dijkstra.rs"  # Path to the second benchmark file
+path = "benches/benchmark_dijkstra.rs"
 
 [[bench]]
 name = "xgraph_benchmarks_3"
 harness = false
-path = "benches/benchmark_graph.rs"  # Path to the third benchmark file
+path = "benches/benchmark_graph.rs"
 
 [[bench]]
 name = "xgraph_benchmarks_4"
 harness = false
-path = "benches/benchmark_large_graph.rs"  # Path to the second benchmark file
+path = "benches/benchmark_large_graph.rs"
 
 [[example]]
 name = "basic_usage"
 path = "examples/basic_usage.rs"
+
+[[example]]
+name = "h_basic_usage"
+path = "examples/h_basic_usage.rs"  # Добавляем пример для гетерогенного графа
 
 [profile.release]
 lto = true

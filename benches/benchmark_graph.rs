@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use xgraph::prelude::*;
+use xgraph::hgraph::prelude::*;
 
 fn benchmark_graph_creation(c: &mut Criterion) {
     c.bench_function("create graph with 1000 nodes", |b| {

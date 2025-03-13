@@ -1,12 +1,46 @@
+//! Module for CSV input/output operations on graphs
+//!
+//! This module provides functionality to save and load graphs to/from CSV files, preserving node
+//! and edge data along with their attributes. It is designed for interoperability with external
+//! tools and data storage, ensuring robust error handling for file operations and data parsing.
+//!
+//! # Features
+//! - Save graphs to CSV files with dynamic attribute support
+//! - Load graphs from CSV files with flexible parsing
+//! - Preservation of graph structure, weights, and attributes
+//!
+//! # Examples
+//!
+//! Saving a graph to CSV:
+//! ```rust
+//! use xgraph::graph::graph::Graph;
+//! use xgraph::graph::io::csv_io::CsvIO;
+//!
+//! let mut graph: Graph<u32, String, String> = Graph::new(false);
+//! let n1 = graph.add_node("A".to_string());
+//! let n2 = graph.add_node("B".to_string());
+//! graph.add_edge(n1, n2, 1, "edge".to_string()).unwrap();
+//! graph.save_to_csv("nodes.csv", "edges.csv").unwrap();
+//! ```
+//!
+//! Loading a graph from CSV:
+//! ```rust
+//! use xgraph::graph::graph::Graph;
+//! use xgraph::graph::io::csv_io::CsvIO;
+//!
+//! let graph = Graph::<u32, String, String>::load_from_csv("nodes.csv", "edges.csv", false).unwrap();
+//! assert_eq!(graph.nodes.len(), 2);
+//! ```
+
 use crate::graph::graph::Graph;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::{self, BufRead, BufReader, Write};
 
-/// A trait for CSV input/output operations on graphs.
+/// Trait for CSV input/output operations on graphs.
 ///
-/// This trait defines methods to save a graph to CSV files and load a graph from CSV files.
-/// It supports saving and loading node and edge data along with their attributes in a structured format.
+/// Defines methods to save a graph to CSV files and load a graph from CSV files. Supports saving
+/// and loading node and edge data along with their attributes in a structured format.
 ///
 /// # Type Parameters
 /// - `W`: The weight type of the graph edges (e.g., `u32`, `f64`).
@@ -19,7 +53,7 @@ use std::io::{self, BufRead, BufReader, Write};
 pub trait CsvIO<W, N, E> {
     /// Saves the graph to CSV files.
     ///
-    /// This method writes the graph's nodes and edges to two separate CSV files:
+    /// Writes the graph's nodes and edges to two separate CSV files:
     /// - `nodes_file`: Contains node IDs and their attributes as columns.
     /// - `edges_file`: Contains edge details (`from`, `to`, `weight`) and their attributes as columns.
     ///
@@ -31,19 +65,19 @@ pub trait CsvIO<W, N, E> {
     /// - `edges_file`: The path to the file where edges will be saved.
     ///
     /// # Returns
-    /// An `io::Result<()>` indicating success or failure.
+    /// - `Ok(())`: On successful save.
+    /// - `Err(io::Error)`: If file creation or writing fails.
     ///
     /// # Examples
     /// ```rust
     /// use xgraph::graph::graph::Graph;
-    /// use xgraph::io::csv_io::CsvIO;
+    /// use xgraph::graph::io::csv_io::CsvIO;
     ///
     /// let mut graph: Graph<u32, String, String> = Graph::new(false);
     /// let n1 = graph.add_node("A".to_string());
     /// let n2 = graph.add_node("B".to_string());
     /// graph.add_edge(n1, n2, 1, "edge".to_string()).unwrap();
-    /// graph.set_node_attribute(n1, "color".to_string(), "red".to_string());
-    ///
+    /// graph.set_node_attribute(n1, "color".to_string(), "red".to_string()).unwrap();
     /// graph.save_to_csv("nodes.csv", "edges.csv").unwrap();
     /// ```
     fn save_to_csv(&self, nodes_file: &str, edges_file: &str) -> io::Result<()>
@@ -54,12 +88,12 @@ pub trait CsvIO<W, N, E> {
 
     /// Loads a graph from CSV files.
     ///
-    /// This method reads a graph from two CSV files:
+    /// Reads a graph from two CSV files:
     /// - `nodes_file`: Contains node IDs and attributes.
     /// - `edges_file`: Contains edge details (`from`, `to`, `weight`) and attributes.
     ///
-    /// The node and edge data are parsed from the CSV using `FromStr`, with node IDs used as temporary
-    /// data if parsing fails. Attributes are loaded dynamically based on the CSV headers.
+    /// Node and edge data are parsed from the CSV using `FromStr`. If parsing fails, default values
+    /// or temporary data may be used. Attributes are loaded dynamically based on CSV headers.
     ///
     /// # Arguments
     /// - `nodes_file`: The path to the file containing nodes.
@@ -67,14 +101,14 @@ pub trait CsvIO<W, N, E> {
     /// - `directed`: A boolean indicating whether the loaded graph should be directed.
     ///
     /// # Returns
-    /// An `io::Result<Self>` containing the loaded graph or an error.
+    /// - `Ok(Self)`: The loaded graph on success.
+    /// - `Err(io::Error)`: If file reading, parsing, or graph construction fails.
     ///
     /// # Examples
     /// ```rust
     /// use xgraph::graph::graph::Graph;
-    /// use xgraph::io::csv_io::CsvIO;
+    /// use xgraph::graph::io::csv_io::CsvIO;
     ///
-    /// // Assuming "nodes.csv" and "edges.csv" exist from a previous save
     /// let graph = Graph::<u32, String, String>::load_from_csv("nodes.csv", "edges.csv", false).unwrap();
     /// assert_eq!(graph.nodes.len(), 2);
     /// assert_eq!(graph.edges.len(), 1);
@@ -189,7 +223,12 @@ where
         for line in lines {
             let line = line?;
             let parts: Vec<&str> = line.split(',').collect();
-            let _node_id: usize = parts[0].parse().unwrap_or_default();
+            let _node_id: usize = parts[0].parse().map_err(|e| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Node ID parse error: {:?}", e),
+                )
+            })?;
             let data = parts[0].parse().map_err(|e| {
                 io::Error::new(
                     io::ErrorKind::InvalidData,
@@ -201,7 +240,14 @@ where
             // Load node attributes
             for (key, value) in attr_keys.iter().zip(parts.iter().skip(1)) {
                 if !value.is_empty() {
-                    graph.set_node_attribute(node, key.to_string(), value.to_string());
+                    graph
+                        .set_node_attribute(node, key.to_string(), value.to_string())
+                        .map_err(|e| {
+                            io::Error::new(
+                                io::ErrorKind::Other,
+                                format!("Failed to set node attribute: {:?}", e),
+                            )
+                        })?;
                 }
             }
         }
@@ -219,27 +265,49 @@ where
         for line in lines {
             let line = line?;
             let parts: Vec<&str> = line.split(',').collect();
-            let from: usize = parts[0].parse().unwrap_or_default();
-            let to: usize = parts[1].parse().unwrap_or_default();
+            let from: usize = parts[0].parse().map_err(|e| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Edge 'from' parse error: {:?}", e),
+                )
+            })?;
+            let to: usize = parts[1].parse().map_err(|e| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Edge 'to' parse error: {:?}", e),
+                )
+            })?;
             let weight = parts[2].parse().map_err(|e| {
                 io::Error::new(
                     io::ErrorKind::InvalidData,
                     format!("Weight parse error: {:?}", e),
                 )
             })?;
-            let data = "".parse().map_err(|e| {
+            let data = parts.get(3).unwrap_or(&"").parse().map_err(|e| {
                 io::Error::new(
                     io::ErrorKind::InvalidData,
                     format!("Edge data parse error: {:?}", e),
                 )
             })?;
 
-            graph.add_edge(from, to, weight, data).unwrap_or_default();
+            graph.add_edge(from, to, weight, data).map_err(|e| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Add edge error: {:?}", e),
+                )
+            })?;
 
             // Load edge attributes
             for (key, value) in attr_keys.iter().zip(parts.iter().skip(3)) {
                 if !value.is_empty() {
-                    graph.set_edge_attribute(from, to, key.to_string(), value.to_string());
+                    graph
+                        .set_edge_attribute(from, to, key.to_string(), value.to_string())
+                        .map_err(|e| {
+                            io::Error::new(
+                                io::ErrorKind::Other,
+                                format!("Failed to set edge attribute: {:?}", e),
+                            )
+                        })?;
                 }
             }
         }
@@ -259,8 +327,12 @@ mod tests {
         let n1 = graph.add_node("A".to_string());
         let n2 = graph.add_node("B".to_string());
         graph.add_edge(n1, n2, 1, "edge".to_string()).unwrap();
-        graph.set_node_attribute(n1, "color".to_string(), "red".to_string());
-        graph.set_edge_attribute(n1, n2, "type".to_string(), "road".to_string());
+        graph
+            .set_node_attribute(n1, "color".to_string(), "red".to_string())
+            .unwrap();
+        graph
+            .set_edge_attribute(n1, n2, "type".to_string(), "road".to_string())
+            .unwrap();
 
         graph.save_to_csv("nodes.csv", "edges.csv").unwrap();
         let loaded_graph =

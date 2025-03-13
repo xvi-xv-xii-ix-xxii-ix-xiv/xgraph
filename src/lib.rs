@@ -3,9 +3,21 @@
 //! A comprehensive graph theory library providing data structures and algorithms
 //! for working with directed and undirected graphs.
 
-pub mod algorithms;
-pub mod conversion;
+#[cfg(feature = "graph")]
 pub mod graph;
-pub mod io;
+#[cfg(feature = "hgraph")]
+pub mod hgraph;
+
 pub mod prelude;
-pub mod utils;
+
+#[cfg(feature = "graph")]
+pub use graph::{
+    bridges, centrality, connectivity, leiden_clustering, search, shortest_path, wiedemann_ford,
+    Edge, Graph, Node,
+};
+
+#[cfg(feature = "hgraph")]
+pub use hgraph::{
+    h_bridges, h_centrality, h_connectivity, h_leiden_clustering, h_search, h_shortest_path,
+    h_wiedemann_ford, HEdge, HNode, HeterogeneousGraph,
+};

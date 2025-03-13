@@ -1,9 +1,17 @@
-pub use crate::algorithms::bridges::Bridges;
-pub use crate::algorithms::centrality::Centrality;
-pub use crate::algorithms::connectivity::Connectivity;
-pub use crate::algorithms::leiden_clustering::CommunityDetection;
-pub use crate::algorithms::search::Search;
-pub use crate::algorithms::wiedemann_ford::DominatingSetFinder;
-pub use crate::conversion::graph_conversion::GraphConversion;
-pub use crate::graph::graph::Graph;
-pub use crate::io::csv_io::CsvIO;
+#[cfg(feature = "graph")]
+pub use crate::graph::edge;
+#[cfg(feature = "graph")]
+pub use crate::graph::graph;
+#[cfg(feature = "graph")]
+pub use crate::graph::io::csv_io;
+#[cfg(feature = "graph")]
+pub use crate::graph::node;
+
+#[cfg(feature = "hgraph")]
+pub use crate::hgraph::h_edge;
+#[cfg(feature = "hgraph")]
+pub use crate::hgraph::h_graph;
+#[cfg(feature = "hgraph")]
+pub use crate::hgraph::h_node;
+#[cfg(feature = "hgraph")]
+pub use crate::hgraph::io::hcsv_io;
