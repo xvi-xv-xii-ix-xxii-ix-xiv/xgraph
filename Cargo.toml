@@ -29,9 +29,9 @@ criterion = "0.5.1"  # For benchmarking
 float-cmp = "0.10"
 
 [features]
-default = ["graph", "hgraph"]  # Включаем обе фичи по умолчанию
-graph = []                     # Фича для работы с обычным графом
-hgraph = []                    # Фича для работы с гетерогенным мультиграфом
+default = ["graph", "hgraph"]
+graph = []
+hgraph = []
 
 [[bench]]
 name = "xgraph_benchmarks_1"
@@ -59,7 +59,7 @@ path = "examples/basic_usage.rs"
 
 [[example]]
 name = "h_basic_usage"
-path = "examples/h_basic_usage.rs"  # Добавляем пример для гетерогенного графа
+path = "examples/h_basic_usage.rs"
 
 [profile.release]
 lto = true
